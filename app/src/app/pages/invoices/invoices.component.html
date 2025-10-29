@@ -1,0 +1,267 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-3xl font-bold text-gray-800">Invoice Management</h2>
+    <button 
+      (click)="addInvoice()" 
+      class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+      Add New Invoice
+    </button>
+  </div>
+
+  <!-- Invoices List -->
+  <div class="bg-white rounded-lg shadow-md overflow-hidden" *ngIf="!showForm">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Invoice #</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Appointment</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tax</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let invoice of invoices" class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">{{ invoice.invoiceNumber }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ getAppointmentInfo(invoice.appointmentId) }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ invoice.invoiceDate | date:'short' }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">${{ invoice.subTotal.toFixed(2) }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">${{ invoice.taxAmount.toFixed(2) }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">${{ invoice.totalAmount.toFixed(2) }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                    [class]="getStatusColor(invoice.status)">
+                {{ invoice.status }}
+              </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+              <button 
+                (click)="editInvoice(invoice)"
+                class="text-indigo-600 hover:text-indigo-900">
+                Edit
+              </button>
+              <button 
+                (click)="updateInvoiceAfterVisit(invoice)"
+                class="text-green-600 hover:text-green-900">
+                Post-Visit
+              </button>
+              <button 
+                (click)="markAsPaid(invoice)"
+                *ngIf="invoice.status !== 'Paid'"
+                class="text-blue-600 hover:text-blue-900">
+                Mark Paid
+              </button>
+              <button 
+                (click)="deleteInvoice(invoice.id!)"
+                class="text-red-600 hover:text-red-900">
+                Delete
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="invoices.length === 0">
+            <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+              No invoices found. Create your first invoice to get started.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Invoice Form -->
+  <div class="bg-white rounded-lg shadow-md p-6" *ngIf="showForm">
+    <h3 class="text-xl font-semibold text-gray-800 mb-4">
+      {{ editingInvoice ? 'Edit Invoice' : 'Add New Invoice' }}
+    </h3>
+    
+    <form (ngSubmit)="saveInvoice()" class="space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="invoiceNumber" class="block text-sm font-medium text-gray-700">Invoice Number</label>
+          <input 
+            type="text" 
+            id="invoiceNumber"
+            [(ngModel)]="invoice.invoiceNumber" 
+            name="invoiceNumber"
+            required
+            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+          <label for="appointmentId" class="block text-sm font-medium text-gray-700">Appointment</label>
+          <select 
+            id="appointmentId"
+            [(ngModel)]="invoice.appointmentId" 
+            name="appointmentId"
+            required
+            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            <option value="0">Select Appointment</option>
+            <option *ngFor="let appointment of appointments" [value]="appointment.id">
+              Appointment #{{ appointment.id }} - {{ appointment.appointmentDate | date:'short' }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label for="subTotal" class="block text-sm font-medium text-gray-700">Subtotal</label>
+          <input 
+            type="number" 
+            id="subTotal"
+            [(ngModel)]="invoice.subTotal" 
+            name="subTotal"
+            step="0.01"
+            required
+            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+          <label for="taxAmount" class="block text-sm font-medium text-gray-700">Tax Amount</label>
+          <input 
+            type="number" 
+            id="taxAmount"
+            [(ngModel)]="invoice.taxAmount" 
+            name="taxAmount"
+            step="0.01"
+            required
+            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+        </div>
+        <div>
+          <label for="totalAmount" class="block text-sm font-medium text-gray-700">Total Amount</label>
+          <input 
+            type="number" 
+            id="totalAmount"
+            [(ngModel)]="invoice.totalAmount" 
+            name="totalAmount"
+            step="0.01"
+            required
+            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+        </div>
+      </div>
+
+      <div>
+        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
+        <select 
+          id="status"
+          [(ngModel)]="invoice.status" 
+          name="status"
+          required
+          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+          <option value="Pending">Pending</option>
+          <option value="Paid">Paid</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+      </div>
+
+      <!-- Post-Visit Update Section -->
+      <div *ngIf="editingInvoice" class="border-t pt-4">
+        <h4 class="text-lg font-medium text-gray-800 mb-3">Post-Visit Updates</h4>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="diagnosis" class="block text-sm font-medium text-gray-700">Diagnosis</label>
+            <textarea 
+              id="diagnosis"
+              [(ngModel)]="diagnosis" 
+              name="diagnosis"
+              rows="3"
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter diagnosis details..."></textarea>
+          </div>
+          <div>
+            <label for="medicalOrders" class="block text-sm font-medium text-gray-700">Medical Orders</label>
+            <textarea 
+              id="medicalOrders"
+              [(ngModel)]="medicalOrders" 
+              name="medicalOrders"
+              rows="3"
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter medical orders..."></textarea>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+          <div>
+            <label for="additionalCharges" class="block text-sm font-medium text-gray-700">Additional Charges</label>
+            <input 
+              type="number" 
+              id="additionalCharges"
+              [(ngModel)]="additionalCharges" 
+              name="additionalCharges"
+              step="0.01"
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label for="medicationCost" class="block text-sm font-medium text-gray-700">Medication Cost</label>
+            <input 
+              type="number" 
+              id="medicationCost"
+              [(ngModel)]="medicationCost" 
+              name="medicationCost"
+              step="0.01"
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div>
+            <label for="procedureCost" class="block text-sm font-medium text-gray-700">Procedure Cost</label>
+            <input 
+              type="number" 
+              id="procedureCost"
+              [(ngModel)]="procedureCost" 
+              name="procedureCost"
+              step="0.01"
+              class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <button 
+            type="button" 
+            (click)="addPostVisitCharges()"
+            class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md">
+            Add Post-Visit Charges
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label for="notes" class="block text-sm font-medium text-gray-700">Notes</label>
+        <textarea 
+          id="notes"
+          [(ngModel)]="invoice.notes" 
+          name="notes"
+          rows="3"
+          class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Additional notes..."></textarea>
+      </div>
+
+      <div class="flex justify-end space-x-3 pt-4">
+        <button 
+          type="button" 
+          (click)="cancelForm()"
+          class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+          Cancel
+        </button>
+        <button 
+          type="submit"
+          class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+          {{ editingInvoice ? 'Update' : 'Create' }} Invoice
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

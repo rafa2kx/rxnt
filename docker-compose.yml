@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # SQL Server Database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: rxnt-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Rxnt2024!Secure
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - rxnt-network
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Rxnt2024!Secure -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  # .NET Core 8 API
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: rxnt-api
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=RXNTClinicManager;User Id=sa;Password=Rxnt2024!Secure;TrustServerCertificate=True;
+    depends_on:
+      - sqlserver
+    networks:
+      - rxnt-network
+
+  # Angular 16 Frontend
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: rxnt-app
+    ports:
+      - "4200:80"
+    depends_on:
+      - api
+    networks:
+      - rxnt-network
+
+networks:
+  rxnt-network:
+    driver: bridge
+
+volumes:
+  sqlserver_data:

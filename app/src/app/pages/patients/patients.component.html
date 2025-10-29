@@ -1,0 +1,82 @@
+<div class="patients">
+  <div class="header">
+    <h2>Patients</h2>
+    <button class="btn btn-primary" (click)="addPatient()" *ngIf="!showForm">Add New Patient</button>
+  </div>
+
+  <div class="form-container" *ngIf="showForm">
+    <h3>{{ editingPatient ? 'Edit' : 'Add' }} Patient</h3>
+    <form (ngSubmit)="savePatient()">
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" class="form-control" [(ngModel)]="patient.firstName" name="firstName" required>
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" class="form-control" [(ngModel)]="patient.lastName" name="lastName" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date of Birth</label>
+          <input type="date" class="form-control" [(ngModel)]="patient.dateOfBirth" name="dateOfBirth" required>
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <select class="form-control" [(ngModel)]="patient.gender" name="gender" required>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" class="form-control" [(ngModel)]="patient.email" name="email">
+      </div>
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="text" class="form-control" [(ngModel)]="patient.phone" name="phone">
+      </div>
+      <div class="form-group">
+        <label>Address</label>
+        <textarea class="form-control" rows="3" [(ngModel)]="patient.address" name="address"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-success">Save</button>
+        <button type="button" class="btn btn-danger" (click)="cancelForm()">Cancel</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="table-container" *ngIf="!showForm">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Date of Birth</th>
+          <th>Gender</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let patient of patients">
+          <td>{{ patient.id }}</td>
+          <td>{{ patient.firstName }} {{ patient.lastName }}</td>
+          <td>{{ patient.email }}</td>
+          <td>{{ patient.phone }}</td>
+          <td>{{ patient.dateOfBirth }}</td>
+          <td>{{ patient.gender }}</td>
+          <td>
+            <button class="btn btn-primary" (click)="editPatient(patient)">Edit</button>
+            <button class="btn btn-danger" (click)="deletePatient(patient.id!)">Delete</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
