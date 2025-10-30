@@ -12,5 +12,6 @@ namespace RXNT.API.Repositories
         Task UpdateAsync(T entity);
         Task DeleteAsync(T entity);
         Task<bool> ExistsAsync(int id);
+        Task SaveChangesAsync();
     }
 }

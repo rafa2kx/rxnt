@@ -7,7 +7,7 @@ namespace RXNT.API.Services
     {
         Task<IEnumerable<PatientDto>> GetAllPatientsAsync();
         Task<PatientDto?> GetPatientByIdAsync(int id);
-        Task<PatientDto> CreatePatientAsync(PatientDto patient);
+        Task<PatientDto> CreatePatientAsync(PatientDto patient, bool save = false);
         Task<PatientDto?> UpdatePatientAsync(int id, PatientDto patient);
         Task<bool> DeletePatientAsync(int id);
         Task<(bool IsValid, string ErrorMessage)> ValidatePatientAsync(Patient patient, bool isUpdate = false, int? existingId = null);

@@ -54,7 +54,7 @@ namespace RXNT.API.Services
             }
         }
 
-        public async Task<DoctorDto> CreateDoctorAsync(DoctorDto doctorDto)
+        public async Task<DoctorDto> CreateDoctorAsync(DoctorDto doctorDto, bool save = false)
         {
             _logger.LogInformation("Creating doctor: {FirstName} {LastName}", doctorDto.FirstName, doctorDto.LastName);
 
@@ -74,7 +74,10 @@ namespace RXNT.API.Services
 
             // Call repository for data access
             await _doctorRepository.AddAsync(doctor);
-
+            if (save)
+            {
+                await _doctorRepository.SaveChangesAsync();
+            }
             _logger.LogInformation("Doctor created successfully");
             return doctor.ToDto();
         }

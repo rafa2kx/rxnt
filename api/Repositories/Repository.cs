@@ -59,5 +59,10 @@ namespace RXNT.API.Repositories
             var entity = await GetByIdAsync(id);
             return entity != null;
         }
+
+        public async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
+        }
     }
 }

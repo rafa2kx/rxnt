@@ -67,6 +67,9 @@ builder.Services.AddScoped<IBulkAppointmentService, BulkAppointmentService>();
 builder.Services.AddSingleton<ICsvAppointmentParser, CsvAppointmentParser>();
 builder.Services.AddTransient<BulkAppointmentProcessor>();
 builder.Services.AddTransient<BulkCleanupService>();
+builder.Services.AddSingleton<ICsvUnifiedParser, CsvUnifiedParser>();
+builder.Services.AddScoped<IBulkUnifiedImportService, BulkUnifiedImportService>();
+builder.Services.AddTransient<BulkUnifiedImportProcessor>();
 
 // Add validation services
 builder.Services.AddScoped<IPatientValidationService, PatientValidationService>();

@@ -7,7 +7,7 @@ namespace RXNT.API.Services
     {
         Task<IEnumerable<DoctorDto>> GetAllDoctorsAsync();
         Task<DoctorDto?> GetDoctorByIdAsync(int id);
-        Task<DoctorDto> CreateDoctorAsync(DoctorDto doctor);
+        Task<DoctorDto> CreateDoctorAsync(DoctorDto doctor, bool save = false);
         Task<DoctorDto?> UpdateDoctorAsync(int id, DoctorDto doctor);
         Task<bool> DeleteDoctorAsync(int id);
         Task<IEnumerable<AppointmentDto>> GetDoctorScheduleAsync(int doctorId);
