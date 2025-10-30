@@ -1,11 +1,11 @@
 # RXNT Clinic Manager
 
-A full-stack application for managing clinic operations, built with Angular 16, .NET Core 8 API, and SQL Server, all containerized with Docker.
+A full-stack application for managing clinic operations, built with Angular 16, .NET 8 API, and SQL Server, all containerized with Docker.
 
 ## Architecture
 
 - **Frontend**: Angular 16 with modern UI/UX
-- **Backend**: .NET Core 8 Web API
+- **Backend**: .NET 8 Web API
 - **Database**: SQL Server 2022
 - **Containerization**: Docker with multi-container setup
 
@@ -28,14 +28,13 @@ The easiest way to get started is using Docker. All services are pre-configured 
 
 ```bash
 # 1. Start all services
-docker-compose up --build
+docker compose up -d --build
 
-# 2. Wait for all containers to be ready (about 1-2 minutes)
-
-# 3. Access the application
+# 2. Access the application
 # Frontend: http://localhost:4200
-# API: http://localhost:5000
-# Swagger: http://localhost:5000/swagger
+# API:      http://localhost:5000
+# Swagger:  http://localhost:5000/swagger
+# Hangfire: http://localhost:5000/hangfire/
 ```
 
 For detailed setup instructions, see [SETUP.md](SETUP.md).
@@ -97,12 +96,11 @@ RXNT/
 - ✅ Patient Management (CRUD operations)
 - ✅ Appointment Scheduling (CRUD operations)
 - ✅ Repository Pattern for Data Access
-- ✅ Unit of Work Pattern for Transactions
 - ✅ Service Layer with Validation
-- ✅ Transactional Database Operations (Automatic Rollback on Failures)
+- ✅ Transactional write operations (controller-scoped)
 - ✅ Comprehensive Exception Handling
 - ✅ Structured Logging
-- ✅ Dashboard with Statistics
+- ✅ Hangfire background jobs and dashboard
 - ✅ Responsive UI
 - ✅ RESTful API with Swagger Documentation
 - ✅ Entity Framework Core with SQL Server
@@ -110,7 +108,7 @@ RXNT/
 
 ## Database
 
-The SQL Server database is automatically initialized when the container starts. The database schema is created using Entity Framework migrations.
+The SQL Server database is automatically initialized when the container starts. The API applies Entity Framework Core migrations on startup to create/update the schema.
 
 - **Default Password**: Rxnt2024!Secure
 - **Port**: 1433
@@ -121,6 +119,12 @@ The SQL Server database is automatically initialized when the container starts. 
 
 All API endpoints are documented via Swagger UI at http://localhost:5000/swagger
 
+### Hangfire Dashboard
+
+- URL: http://localhost:5000/hangfire/
+- Exposed without authentication in Development inside the container.
+- If you see 401 or an empty response, try a hard refresh or an incognito window.
+
 ## Technologies
 
 ### Frontend
@@ -129,7 +133,7 @@ All API endpoints are documented via Swagger UI at http://localhost:5000/swagger
 - RxJS
 
 ### Backend
-- .NET Core 8
+- .NET 8
 - Entity Framework Core
 - Repository Pattern
 - Unit of Work Pattern
@@ -145,14 +149,13 @@ All API endpoints are documented via Swagger UI at http://localhost:5000/swagger
 
 ## Architecture
 
-The application follows a layered architecture with Base Controller pattern:
+The application follows a layered architecture:
 
-- **Base Controller Pattern**: Provides transaction management and error handling for all controllers
-- **Repository Pattern**: Abstracts data access logic (for read operations)
-- **Service Layer**: Contains business logic and validation
-- **Transactional Operations**: All write operations in controllers automatically run within transactions with rollback on failures
-- **Exception Handling**: Centralized error handling in BaseController and global middleware
-- **Logging**: Structured logging throughout the application
+- Repository Pattern: Abstracts data access
+- Service Layer: Business logic and validation
+- Base Controller Pattern: Transaction management and error handling for write operations
+- Exception Handling Middleware: Global error handling
+- Logging: Structured logging throughout the application
 
 For detailed architecture documentation, see [ARCHITECTURE.md](ARCHITECTURE.md).
 

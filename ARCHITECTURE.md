@@ -17,25 +17,20 @@ The Repository pattern abstracts data access and provides a clean interface for 
 
 #### Entity-Specific Repositories
 - `IPatientRepository` / `PatientRepository`: Patient-specific data access
+- `IDoctorRepository` / `DoctorRepository`: Doctor-specific data access
 - `IAppointmentRepository` / `AppointmentRepository`: Appointment-specific data access
+- `IInvoiceRepository` / `InvoiceRepository`: Invoice-specific data access
 
 #### Benefits
 - Separation of data access logic from business logic
 - Testability through interface-based design
 - Centralized data access patterns
 
-### 2. Unit of Work Pattern
-**Location**: `api/UnitOfWork/`
+### 2. Data Layer (Entity Framework Core)
+**Location**: `api/Data/`
 
-Manages transactions across multiple repositories and ensures data consistency.
-
-- `IUnitOfWork`: Interface defining transaction boundaries
-- `UnitOfWork`: Implementation managing database transactions
-
-#### Features
-- **Transactional Operations**: Ensures all-or-nothing database commits
-- **Rollback Support**: Automatic rollback on exceptions
-- **Centralized Save**: Single point for SaveChanges operations
+- `ApplicationDbContext`: EF Core DbContext containing DbSets for domain entities and Fluent API configurations.
+- Migrations lived under `api/Migrations/` and are applied automatically at application startup.
 
 ### 3. Service Layer
 **Location**: `api/Services/`
@@ -48,6 +43,8 @@ Contains business logic and validation.
   - Email validation (format, uniqueness)
   - Phone validation (format)
   - Date of birth validation
+- `IDoctorValidationService` / `DoctorValidationService`: Doctor validation
+  - Required fields, specialty, and license number validation
 - `IAppointmentValidationService` / `AppointmentValidationService`: Appointment validation
   - Patient existence validation
   - Date/time validation
@@ -79,7 +76,7 @@ Transactions are managed in the `BaseController` using Entity Framework's transa
 
 ### Transaction Flow
 
-Transactions are handled using the `ExecuteInTransactionAsync` method from `BaseController`:
+Transactions are handled using the `ExecuteWithTransactionAsync` method from `BaseController`:
 1. **Begin Transaction**: Starts a database transaction
 2. **Execute Operation**: Runs the operation within the transaction
 3. **Commit**: Automatically commits on success
@@ -89,18 +86,15 @@ Transactions are handled using the `ExecuteInTransactionAsync` method from `Base
 ### Example Flow in Controllers
 
 ```csharp
-var createdPatient = await ExecuteInTransactionAsync(async (context) =>
+return await ExecuteWithTransactionAsync(async () =>
 {
-    // Validation
     var validation = await _patientService.ValidatePatientAsync(patient);
     if (!validation.IsValid)
         throw new InvalidOperationException(validation.ErrorMessage);
 
-    // Database operations
     patient.CreatedDate = DateTime.UtcNow;
-    await context.Patients.AddAsync(patient);
-    await context.SaveChangesAsync();
-
+    await _context.Patients.AddAsync(patient);
+    // SaveChanges occurs within BaseController
     return patient;
 });
 ```
@@ -167,11 +161,47 @@ _logger.LogInformation("Creating patient: {FirstName} {LastName}",
 All services are registered in `Program.cs` with appropriate scopes:
 
 ```csharp
-// Scoped services (one per request)
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+// DbContext
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Repositories
+builder.Services.AddScoped<IRepository<Patient>, Repository<Patient>>();
+builder.Services.AddScoped<IRepository<Doctor>, Repository<Doctor>>();
+builder.Services.AddScoped<IRepository<Appointment>, Repository<Appointment>>();
+builder.Services.AddScoped<IRepository<Invoice>, Repository<Invoice>>();
+
+builder.Services.AddScoped<IPatientRepository, PatientRepository>();
+builder.Services.AddScoped<IDoctorRepository, DoctorRepository>();
+builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+builder.Services.AddScoped<IInvoiceRepository, InvoiceRepository>();
+
+// Services
 builder.Services.AddScoped<IPatientService, PatientService>();
+builder.Services.AddScoped<IDoctorService, DoctorService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 ```
+
+## Database Initialization and Migrations
+
+- On startup, the API ensures the database exists and applies EF Core migrations automatically:
+
+```csharp
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.Migrate();
+}
+```
+
+- Migrations are stored under `api/Migrations/` and are part of the API image; no manual intervention is required during container startup.
+
+## Background Processing (Hangfire)
+
+- Hangfire is configured to use SQL Server storage and runs within the API process.
+- Dashboard is exposed at `/hangfire`.
+- A recurring cleanup job is scheduled daily at 2 AM.
 
 ## Data Flow
 
@@ -187,9 +217,9 @@ Controller (BaseController - Transaction Management)
 │ - Direct DbContext access                   │
 └─────────────────────────────────────────────┘
     ↓
-Service Layer (Business Logic + Validation for Reads)
+Service Layer (Business Logic + Validation)
     ↓
-Repository (Data Access for Reads)
+Repository (Data Access)
     ↓
 Database
 ```
@@ -208,11 +238,25 @@ Database
 ## Key Design Patterns
 
 - **Base Controller Pattern**: Provides transaction management and error handling for all controllers
-- **Repository Pattern**: Data access abstraction (for read operations)
+- **Repository Pattern**: Data access abstraction
 - **Service Layer Pattern**: Business logic encapsulation and validation
 - **Dependency Injection**: Loose coupling
 - **Exception Handling Middleware**: Global exception handler
-- **Template Method Pattern**: BaseController defines transaction template
+
+## Deployment Topology (Docker Compose)
+
+Services defined in `docker-compose.yml`:
+
+- `sqlserver` (SQL Server 2022)
+  - Healthcheck uses `/opt/mssql-tools18/bin/sqlcmd -C` to trust the server certificate.
+  - Exposes `1433`.
+- `api` (ASP.NET Core 8)
+  - Depends on `sqlserver` with `condition: service_healthy`.
+  - Applies EF Core migrations on startup.
+  - Exposes `5000` (maps to container `8080`).
+- `app` (Angular + Nginx)
+  - Depends on `api`.
+  - Exposes `4200`.
 
 ## Testing Recommendations
 

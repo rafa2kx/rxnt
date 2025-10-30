@@ -13,7 +13,7 @@ Before setting up the application, ensure you have the following installed:
 The application consists of three main services:
 
 1. **Frontend (Angular 16)**: Served on port 4200
-2. **Backend (.NET Core 8 API)**: Served on port 5000
+2. **Backend (.NET 8 API)**: Served on port 5000
 3. **Database (SQL Server 2022)**: Running on port 1433
 
 ## Quick Start with Docker
@@ -31,15 +31,15 @@ cd RXNT
 From the root directory (where docker-compose.yml is located):
 
 ```bash
-docker-compose up --build
+docker compose up -d --build
 ```
 
 This command will:
 - Build the Angular application
-- Build the .NET Core API
+- Build the .NET 8 API
 - Pull the SQL Server image
 - Create and start all three containers
-- Set up the database automatically
+- Apply EF Core migrations to create/update the database schema
 
 ### Step 3: Access the Application
 
@@ -48,25 +48,26 @@ Once all containers are running:
 - **Frontend**: http://localhost:4200
 - **API**: http://localhost:5000
 - **Swagger API Documentation**: http://localhost:5000/swagger
+- **Hangfire Dashboard**: http://localhost:5000/hangfire/
 - **Database**: localhost:1433
 
 ### Step 4: Stop the Services
 
 To stop all containers:
 ```bash
-docker-compose down
+docker compose down
 ```
 
 To stop and remove volumes (clears database data):
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
 
 ## Local Development Setup
 
 If you prefer to run the applications locally without Docker:
 
-### Backend (.NET Core 8 API)
+### Backend (.NET 8 API)
 
 1. **Navigate to the API directory:**
    ```bash
@@ -150,7 +151,7 @@ If you encounter port conflicts:
 
 1. **Check if SQL Server is running:**
    ```bash
-   docker ps
+   docker compose ps
    ```
 
 2. **Check SQL Server logs:**
@@ -162,18 +163,22 @@ If you encounter port conflicts:
 
 ### Build Errors
 
-1. **Clear Docker cache:**
+1. **Rebuild cleanly:**
    ```bash
-   docker-compose down -v
-   docker system prune -a
-   docker-compose up --build
+   docker compose build
+   docker compose up -d
+   ```
+
+2. **If you hit a BuildKit/bake error:**
+   ```bash
+   $env:DOCKER_BUILDKIT="0"; $env:COMPOSE_DOCKER_CLI_BUILD="0"; docker compose up --build -d
    ```
 
 ## Project Structure
 
 ```
 RXNT/
-├── api/                      # .NET Core 8 API
+├── api/                      # .NET 8 API
 │   ├── Controllers/          # API Controllers
 │   ├── Data/                 # DbContext and Database
 │   ├── Models/               # Entity Models
@@ -197,7 +202,7 @@ RXNT/
 
 - ✅ Patient Management (CRUD operations)
 - ✅ Appointment Scheduling (CRUD operations)
-- ✅ Dashboard with Statistics
+- ✅ Hangfire background jobs and dashboard
 - ✅ Responsive UI
 - ✅ RESTful API with Swagger Documentation
 - ✅ Entity Framework Core with SQL Server
@@ -218,6 +223,9 @@ RXNT/
 - `POST /api/appointments` - Create new appointment
 - `PUT /api/appointments/{id}` - Update appointment
 - `DELETE /api/appointments/{id}` - Delete appointment
+
+### Hangfire Dashboard
+- `GET /hangfire/` - Background jobs dashboard (Development)
 
 ## Support
 

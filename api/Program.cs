@@ -6,6 +6,7 @@ using RXNT.API.Services;
 using RXNT.API.Middleware;
 using Hangfire;
 using Hangfire.SqlServer;
+using Hangfire.Dashboard;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -98,8 +99,13 @@ app.UseCors("AllowAll");
 // Add custom middleware
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-// Hangfire dashboard
-app.UseHangfireDashboard("/hangfire");
+// Hangfire dashboard (allow anonymous in Development)
+var dashboardOptions = new DashboardOptions();
+if (app.Environment.IsDevelopment())
+{
+    dashboardOptions.Authorization = new[] { new AllowAllDashboardAuthorizationFilter() };
+}
+app.MapHangfireDashboard("/hangfire", dashboardOptions);
 
 app.UseAuthorization();
 
@@ -112,3 +118,9 @@ RecurringJob.AddOrUpdate<BulkCleanupService>(
     Cron.Daily(2));
 
 app.Run();
+
+// Internal authorization filter to allow all (Development only)
+internal class AllowAllDashboardAuthorizationFilter : IDashboardAuthorizationFilter
+{
+    public bool Authorize(DashboardContext context) => true;
+}
