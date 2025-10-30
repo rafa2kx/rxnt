@@ -14,6 +14,7 @@ namespace RXNT.API.Data
         public DbSet<Doctor> Doctors { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
+        public DbSet<BulkJobStatus> BulkJobStatuses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -80,6 +81,18 @@ namespace RXNT.API.Data
                       .WithMany()
                       .HasForeignKey(i => i.AppointmentId)
                       .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // Configure BulkJobStatus entity
+            modelBuilder.Entity<BulkJobStatus>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => e.JobId).IsUnique();
+                entity.Property(e => e.JobId).IsRequired().HasMaxLength(64);
+                entity.Property(e => e.HangfireJobId).HasMaxLength(64);
+                entity.Property(e => e.Status).IsRequired().HasMaxLength(32);
+                entity.Property(e => e.ErrorSummary).HasMaxLength(1024);
+                entity.Property(e => e.SourceFilePath).HasMaxLength(512);
             });
         }
     }

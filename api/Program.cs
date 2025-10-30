@@ -4,6 +4,8 @@ using RXNT.API.Models;
 using RXNT.API.Repositories;
 using RXNT.API.Services;
 using RXNT.API.Middleware;
+using Hangfire;
+using Hangfire.SqlServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +29,23 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Add Hangfire (using SQL Server storage)
+builder.Services.AddHangfire(configuration => configuration
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"), new SqlServerStorageOptions
+    {
+        QueuePollInterval = TimeSpan.FromSeconds(5),
+        SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+        PrepareSchemaIfNecessary = true
+    }));
+
+builder.Services.AddHangfireServer();
+
+// Bind BulkProcessing options
+builder.Services.Configure<BulkProcessingOptions>(builder.Configuration.GetSection("BulkProcessing"));
+
 // Add repositories
 builder.Services.AddScoped<IRepository<Patient>, Repository<Patient>>();
 builder.Services.AddScoped<IRepository<Doctor>, Repository<Doctor>>();
@@ -44,6 +63,10 @@ builder.Services.AddScoped<IDoctorService, DoctorService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 builder.Services.AddScoped<IAppointmentBookingService, AppointmentBookingService>();
+builder.Services.AddScoped<IBulkAppointmentService, BulkAppointmentService>();
+builder.Services.AddSingleton<ICsvAppointmentParser, CsvAppointmentParser>();
+builder.Services.AddTransient<BulkAppointmentProcessor>();
+builder.Services.AddTransient<BulkCleanupService>();
 
 // Add validation services
 builder.Services.AddScoped<IPatientValidationService, PatientValidationService>();
@@ -65,8 +88,17 @@ app.UseCors("AllowAll");
 // Add custom middleware
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
+// Hangfire dashboard
+app.UseHangfireDashboard("/hangfire");
+
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Recurring cleanup job (daily at 2 AM)
+RecurringJob.AddOrUpdate<BulkCleanupService>(
+    "bulk-cleanup",
+    svc => svc.CleanupAsync(),
+    Cron.Daily(2));
 
 app.Run();

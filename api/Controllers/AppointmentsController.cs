@@ -3,6 +3,7 @@ using RXNT.API.Data;
 using RXNT.API.Models;
 using RXNT.API.DTOs;
 using RXNT.API.Services;
+using Microsoft.Extensions.Options;
 
 namespace RXNT.API.Controllers
 {
@@ -11,16 +12,22 @@ namespace RXNT.API.Controllers
     {
         private readonly IAppointmentService _appointmentService;
         private readonly IAppointmentBookingService _bookingService;
+        private readonly IBulkAppointmentService _bulkService;
+        private readonly IOptions<BulkProcessingOptions> _bulkOptions;
 
         public AppointmentsController(
             IAppointmentService appointmentService,
             IAppointmentBookingService bookingService,
+            IBulkAppointmentService bulkService,
+            IOptions<BulkProcessingOptions> bulkOptions,
             ApplicationDbContext context,
             ILogger<BaseController> logger)
             : base(context, logger)
         {
             _appointmentService = appointmentService;
             _bookingService = bookingService;
+            _bulkService = bulkService;
+            _bulkOptions = bulkOptions;
         }
 
         [HttpGet]
@@ -93,6 +100,63 @@ namespace RXNT.API.Controllers
                     new { id = result.Appointment.Id }, 
                     new { Appointment = result.Appointment, Invoice = result.Invoice });
             });
+        }
+
+        // Accept raw binary (application/octet-stream or text/csv).
+        // Filename must be supplied either as query parameter `filename` or header `X-File-Name`.
+        [HttpPost("bulk-upload")]
+        [RequestSizeLimit(104_857_600)] // ~100MB
+        [Consumes("application/octet-stream", "text/csv")]
+        public async Task<IActionResult> UploadBulkAppointments([FromQuery] string? filename = null)
+        {
+            // Allow client to provide filename via header if not supplied as query
+            if (string.IsNullOrWhiteSpace(filename) && Request.Headers.TryGetValue("X-File-Name", out var headerVals))
+            {
+                filename = headerVals.FirstOrDefault();
+            }
+
+            if (string.IsNullOrWhiteSpace(filename))
+                return BadRequest("Missing filename. Provide as query parameter 'filename' or header 'X-File-Name'.");
+
+            var ext = Path.GetExtension(filename).ToLowerInvariant();
+            if (ext != ".csv")
+                return BadRequest("Only .csv files are supported");
+
+            var maxBytes = _bulkOptions.Value.MaxFileSizeMb * 1024L * 1024L;
+            if (Request.ContentLength.HasValue && Request.ContentLength.Value > maxBytes)
+                return BadRequest($"File exceeds max size of {_bulkOptions.Value.MaxFileSizeMb} MB");
+
+            Directory.CreateDirectory(_bulkOptions.Value.UploadPath);
+            var unique = Guid.NewGuid().ToString("N");
+            var safeFileName = Path.GetFileName(filename);
+            var fileName = $"{unique}_{safeFileName}";
+            var filePath = Path.Combine(_bulkOptions.Value.UploadPath, fileName);
+
+            // Stream request body directly to file to avoid buffering entire file in memory
+            await using (var targetStream = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, useAsync: true))
+            {
+                await Request.Body.CopyToAsync(targetStream);
+            }
+
+            // Optionally, you could validate the CSV contents here before enqueuing
+
+            var (jobId, hangfireJobId) = await _bulkService.EnqueueProcessingForFile(filePath);
+
+            return Accepted(new RXNT.API.DTOs.BulkUploadResponse
+            {
+                JobId = jobId,
+                HangfireJobId = hangfireJobId,
+                FileName = fileName,
+                Status = "Queued"
+            });
+        }
+
+        [HttpGet("bulk-status/{jobId}")]
+        public async Task<IActionResult> GetBulkStatus(string jobId)
+        {
+            var status = await _bulkService.GetStatusAsync(jobId);
+            if (status == null) return NotFound();
+            return Ok(status);
         }
     }
 
