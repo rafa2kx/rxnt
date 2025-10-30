@@ -70,6 +70,17 @@ namespace RXNT.API.Controllers
                 return updatedInvoice;
             });
         }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteInvoice(int id)
+        {
+            return await ExecuteWithTransactionAsync(async () =>
+            {
+                var result = await _invoiceService.DeleteInvoiceAsync(id);
+                if (!result)
+                    throw new KeyNotFoundException($"Invoice with ID {id} not found");
+            });
+        }
     }
 
     // Request models

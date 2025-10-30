@@ -26,9 +26,8 @@ namespace RXNT.API.Extensions
 
         public static Patient ToEntity(this PatientDto dto)
         {
-            return new Patient
+            var patient = new Patient
             {
-                Id = dto.Id,
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 DateOfBirth = dto.DateOfBirth,
@@ -40,6 +39,14 @@ namespace RXNT.API.Extensions
                 UpdatedDate = dto.UpdatedDate,
                 IsActive = dto.IsActive
             };
+            
+            // Only set ID for updates, not for new entities
+            if (dto.Id > 0)
+            {
+                patient.Id = dto.Id;
+            }
+            
+            return patient;
         }
 
         // Doctor mappings
@@ -62,9 +69,8 @@ namespace RXNT.API.Extensions
 
         public static Doctor ToEntity(this DoctorDto dto)
         {
-            return new Doctor
+            var doctor = new Doctor
             {
-                Id = dto.Id,
                 FirstName = dto.FirstName,
                 LastName = dto.LastName,
                 Specialty = dto.Specialty,
@@ -75,6 +81,14 @@ namespace RXNT.API.Extensions
                 UpdatedDate = dto.UpdatedDate,
                 IsActive = dto.IsActive
             };
+            
+            // Only set ID for updates, not for new entities
+            if (dto.Id > 0)
+            {
+                doctor.Id = dto.Id;
+            }
+            
+            return doctor;
         }
 
         // Appointment mappings
@@ -97,19 +111,28 @@ namespace RXNT.API.Extensions
 
         public static Appointment ToEntity(this AppointmentDto dto)
         {
-            return new Appointment
+            // Only set ID if it's greater than 0 (existing entity)
+            // For new entities (Id = 0), let the database generate the ID
+            var appointment = new Appointment
             {
-                Id = dto.Id,
                 PatientId = dto.PatientId,
                 DoctorId = dto.DoctorId,
                 AppointmentDate = dto.AppointmentDate,
                 AppointmentTime = dto.AppointmentTime,
                 Reason = dto.Reason,
                 Notes = dto.Notes,
-                Status = dto.Status,
+                Status = string.IsNullOrWhiteSpace(dto.Status) ? "Scheduled" : dto.Status,
                 CreatedDate = dto.CreatedDate,
                 UpdatedDate = dto.UpdatedDate
             };
+            
+            // Only set ID for updates, not for new entities
+            if (dto.Id > 0)
+            {
+                appointment.Id = dto.Id;
+            }
+            
+            return appointment;
         }
 
         // Invoice mappings

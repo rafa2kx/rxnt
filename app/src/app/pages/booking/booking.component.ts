@@ -1,18 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import { PatientService } from '../../services/patient.service';
 import { DoctorService } from '../../services/doctor.service';
 import { AppointmentService } from '../../services/appointment.service';
-import { InvoiceService } from '../../services/invoice.service';
 import { Patient } from '../../models/patient.model';
 import { Doctor } from '../../models/doctor.model';
-import { Invoice } from '../../models/invoice.model';
 
 @Component({
   selector: 'app-booking',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './booking.component.html',
   styleUrls: ['./booking.component.css']
 })
@@ -39,17 +38,15 @@ export class BookingComponent implements OnInit {
   reason: string = '';
   visitFee: number = 150;
   
-  // Step 3: Payment & Invoice
-  invoice: Invoice | null = null;
-  paymentMethod: string = 'Credit Card';
-  
   currentStep: number = 1;
+  appointmentCreated: boolean = false;
+  createdAppointment: any = null;
   
   constructor(
     private patientService: PatientService,
     private doctorService: DoctorService,
     private appointmentService: AppointmentService,
-    private invoiceService: InvoiceService
+    private router: Router
   ) {}
   
   ngOnInit() {
@@ -90,27 +87,29 @@ export class BookingComponent implements OnInit {
   
   bookAppointment() {
     if (this.selectedPatient && this.selectedDoctor && this.appointmentDate && this.appointmentTime) {
-      this.appointmentService.scheduleWithInvoice({
+      this.appointmentService.createAppointment({
         patientId: this.selectedPatient.id!,
         doctorId: this.selectedDoctor.id,
         appointmentDate: this.appointmentDate,
         appointmentTime: this.appointmentTime,
         reason: this.reason,
-        visitFee: this.visitFee
-      }).subscribe((result: any) => {
-        this.invoice = result.invoice;
+        visitFee: this.visitFee,
+        notes: '',
+        status: ''
+      }).subscribe((appointment: any) => {
+        this.createdAppointment = appointment;
+        this.appointmentCreated = true;
         this.currentStep = 3;
       });
     }
   }
   
-  payInvoice() {
-    if (this.invoice) {
-      this.invoiceService.markAsPaid(this.invoice.id, this.paymentMethod).subscribe(() => {
-        alert('Payment successful!');
-        this.reset();
-      });
-    }
+  goToInvoices() {
+    this.router.navigate(['/invoices']);
+  }
+  
+  bookAnother() {
+    this.reset();
   }
   
   reset() {
@@ -120,7 +119,16 @@ export class BookingComponent implements OnInit {
     this.appointmentDate = '';
     this.appointmentTime = '';
     this.reason = '';
-    this.invoice = null;
-    this.paymentMethod = 'Credit Card';
+    this.appointmentCreated = false;
+    this.createdAppointment = null;
+    this.newPatient = {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      dateOfBirth: '',
+      gender: 'Male',
+      address: ''
+    };
   }
 }

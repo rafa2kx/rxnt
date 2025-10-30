@@ -119,6 +119,24 @@ namespace RXNT.API.Services
             return existingInvoice.ToDto();
         }
 
+        public async Task<bool> DeleteInvoiceAsync(int id)
+        {
+            _logger.LogInformation("Deleting invoice with ID: {InvoiceId}", id);
+
+            var invoice = await _invoiceRepository.GetByIdAsync(id);
+            if (invoice == null)
+            {
+                _logger.LogWarning("Invoice not found with ID: {InvoiceId}", id);
+                return false;
+            }
+
+            // Call repository for data access
+            await _invoiceRepository.DeleteAsync(invoice);
+
+            _logger.LogInformation("Invoice deleted successfully");
+            return true;
+        }
+
         public async Task<bool> MarkInvoiceAsPaidAsync(int id, string paymentMethod)
         {
             _logger.LogInformation("Marking invoice {InvoiceId} as paid with payment method: {PaymentMethod}", id, paymentMethod);

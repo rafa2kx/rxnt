@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AppointmentService } from '../../services/appointment.service';
 import { PatientService } from '../../services/patient.service';
+import { DoctorService } from '../../services/doctor.service';
 import { Appointment } from '../../models/appointment.model';
 import { Patient } from '../../models/patient.model';
+import { Doctor } from '../../models/doctor.model';
 
 @Component({
   selector: 'app-appointments',
@@ -16,6 +18,7 @@ import { Patient } from '../../models/patient.model';
 export class AppointmentsComponent implements OnInit {
   appointments: Appointment[] = [];
   patients: Patient[] = [];
+  doctors: Doctor[] = [];
   showForm = false;
   editingAppointment: Appointment | null = null;
   appointment: Appointment = {
@@ -25,17 +28,20 @@ export class AppointmentsComponent implements OnInit {
     appointmentTime: '',
     reason: '',
     notes: '',
-    status: 'Scheduled'
+    status: 'Scheduled',
+    visitFee: 0
   };
 
   constructor(
     private appointmentService: AppointmentService,
-    private patientService: PatientService
+    private patientService: PatientService,
+    private doctorService: DoctorService
   ) {}
 
   ngOnInit(): void {
     this.loadAppointments();
     this.loadPatients();
+    this.loadDoctors();
   }
 
   loadAppointments(): void {
@@ -47,6 +53,12 @@ export class AppointmentsComponent implements OnInit {
   loadPatients(): void {
     this.patientService.getPatients().subscribe(data => {
       this.patients = data;
+    });
+  }
+
+  loadDoctors(): void {
+    this.doctorService.getDoctors().subscribe(data => {
+      this.doctors = data;
     });
   }
 
@@ -63,14 +75,20 @@ export class AppointmentsComponent implements OnInit {
   }
 
   saveAppointment(): void {
+    // Convert date string to proper format for backend
+    const appointmentToSave = {
+      ...this.appointment,
+      appointmentDate: this.appointment.appointmentDate ? new Date(this.appointment.appointmentDate).toISOString() : ''
+    };
+
     if (this.editingAppointment) {
-      this.appointmentService.updateAppointment(this.editingAppointment.id!, this.appointment)
+      this.appointmentService.updateAppointment(this.editingAppointment.id!, appointmentToSave)
         .subscribe(() => {
           this.loadAppointments();
           this.cancelForm();
         });
     } else {
-      this.appointmentService.createAppointment(this.appointment)
+      this.appointmentService.createAppointment(appointmentToSave)
         .subscribe(() => {
           this.loadAppointments();
           this.cancelForm();
@@ -101,12 +119,18 @@ export class AppointmentsComponent implements OnInit {
       appointmentTime: '',
       reason: '',
       notes: '',
-      status: 'Scheduled'
+      status: 'Scheduled',
+      visitFee: 0
     };
   }
 
   getPatientName(patientId: number): string {
     const patient = this.patients.find(p => p.id === patientId);
     return patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown';
+  }
+
+  getDoctorName(doctorId: number): string {
+    const doctor = this.doctors.find(d => d.id === doctorId);
+    return doctor ? `${doctor.firstName} ${doctor.lastName}` : 'Unknown';
   }
 }

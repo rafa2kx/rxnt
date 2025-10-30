@@ -1,11 +1,13 @@
 <div class="container mx-auto px-4 py-8">
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-3xl font-bold text-gray-800">Invoice Management</h2>
-    <button 
-      (click)="addInvoice()" 
-      class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
-      Add New Invoice
-    </button>
+    <div class="space-x-3">
+      <button 
+        (click)="addInvoice()" 
+        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+        Create Invoice
+      </button>
+    </div>
   </div>
 
   <!-- Invoices List -->
@@ -57,15 +59,10 @@
                 Edit
               </button>
               <button 
-                (click)="updateInvoiceAfterVisit(invoice)"
-                class="text-green-600 hover:text-green-900">
-                Post-Visit
-              </button>
-              <button 
-                (click)="markAsPaid(invoice)"
+                (click)="processPayment(invoice)"
                 *ngIf="invoice.status !== 'Paid'"
-                class="text-blue-600 hover:text-blue-900">
-                Mark Paid
+                class="text-green-600 hover:text-green-900">
+                Process Payment
               </button>
               <button 
                 (click)="deleteInvoice(invoice.id!)"

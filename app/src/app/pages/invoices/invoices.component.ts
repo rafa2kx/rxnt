@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import { InvoiceService } from '../../services/invoice.service';
 import { AppointmentService } from '../../services/appointment.service';
 import { Invoice } from '../../models/invoice.model';
@@ -9,7 +10,7 @@ import { Appointment } from '../../models/appointment.model';
 @Component({
   selector: 'app-invoices',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './invoices.component.html',
   styleUrls: ['./invoices.component.css']
 })
@@ -38,7 +39,8 @@ export class InvoicesComponent implements OnInit {
 
   constructor(
     private invoiceService: InvoiceService,
-    private appointmentService: AppointmentService
+    private appointmentService: AppointmentService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -59,9 +61,7 @@ export class InvoicesComponent implements OnInit {
   }
 
   addInvoice(): void {
-    this.showForm = true;
-    this.editingInvoice = null;
-    this.resetForm();
+    this.router.navigate(['/invoices/create']);
   }
 
   editInvoice(invoice: Invoice): void {
@@ -88,12 +88,6 @@ export class InvoicesComponent implements OnInit {
     }
   }
 
-  updateInvoiceAfterVisit(invoice: Invoice): void {
-    this.editingInvoice = invoice;
-    this.invoice = { ...invoice };
-    this.showForm = true;
-  }
-
   addPostVisitCharges(): void {
     if (this.invoice) {
       const additionalTotal = this.additionalCharges + this.medicationCost + this.procedureCost;
@@ -113,14 +107,8 @@ export class InvoicesComponent implements OnInit {
     }
   }
 
-  markAsPaid(invoice: Invoice): void {
-    const paymentMethod = prompt('Enter payment method (Cash, Card, Insurance, etc.):');
-    if (paymentMethod) {
-      this.invoiceService.markAsPaid(invoice.id!, paymentMethod)
-        .subscribe(() => {
-          this.loadInvoices();
-        });
-    }
+  processPayment(invoice: Invoice): void {
+    this.router.navigate(['/invoices/payment', invoice.id]);
   }
 
   deleteInvoice(id: number): void {

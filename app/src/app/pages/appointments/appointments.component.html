@@ -16,12 +16,25 @@
           </select>
         </div>
         <div class="form-group">
+          <label>Doctor</label>
+          <select class="form-control" [(ngModel)]="appointment.doctorId" name="doctorId" required>
+            <option value="">Select Doctor</option>
+            <option *ngFor="let doctor of doctors" [value]="doctor.id">{{ doctor.firstName }} {{ doctor.lastName }} - {{ doctor.specialty }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
           <label>Status</label>
           <select class="form-control" [(ngModel)]="appointment.status" name="status" required>
             <option value="Scheduled">Scheduled</option>
             <option value="Completed">Completed</option>
             <option value="Cancelled">Cancelled</option>
           </select>
+        </div>
+        <div class="form-group">
+          <label>Visit Fee</label>
+          <input type="number" class="form-control" [(ngModel)]="appointment.visitFee" name="visitFee" step="0.01" min="0">
         </div>
       </div>
       <div class="form-row">
@@ -55,6 +68,7 @@
         <tr>
           <th>ID</th>
           <th>Patient</th>
+          <th>Doctor</th>
           <th>Date</th>
           <th>Time</th>
           <th>Reason</th>
@@ -66,6 +80,7 @@
         <tr *ngFor="let appointment of appointments">
           <td>{{ appointment.id }}</td>
           <td>{{ getPatientName(appointment.patientId) }}</td>
+          <td>{{ getDoctorName(appointment.doctorId) }}</td>
           <td>{{ appointment.appointmentDate }}</td>
           <td>{{ appointment.appointmentTime }}</td>
           <td>{{ appointment.reason }}</td>

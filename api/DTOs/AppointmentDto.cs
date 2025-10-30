@@ -9,7 +9,7 @@ namespace RXNT.API.DTOs
         public string AppointmentTime { get; set; } = string.Empty;
         public string Reason { get; set; } = string.Empty;
         public string Notes { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
+        public string Status { get; set; } = "Scheduled";
         public DateTime CreatedDate { get; set; }
         public DateTime? UpdatedDate { get; set; }
     }

@@ -26,11 +26,11 @@
       </div>
       <div class="flex-1">
         <div class="flex items-center">
-          <div class="flex-shrink-0 w-10 h-10 rounded-full {{ currentStep >= 3 ? 'bg-blue-600' : 'bg-gray-300' }} text-white flex items-center justify-center">
-            {{ currentStep >= 3 ? '3' : '' }}
+          <div class="flex-shrink-0 w-10 h-10 rounded-full {{ currentStep >= 3 ? 'bg-green-600' : 'bg-gray-300' }} text-white flex items-center justify-center">
+            {{ currentStep >= 3 ? '✓' : '' }}
           </div>
           <div class="ml-3">
-            <p class="text-sm font-medium text-gray-900">Payment & Invoice</p>
+            <p class="text-sm font-medium text-gray-900">Complete</p>
           </div>
         </div>
       </div>
@@ -155,46 +155,62 @@
       </form>
     </div>
 
-    <!-- Step 3: Payment & Invoice -->
+    <!-- Step 3: Appointment Confirmation -->
     <div *ngIf="currentStep === 3" class="bg-white rounded-lg shadow-md p-6">
-      <h2 class="text-2xl font-semibold mb-6">Invoice & Payment</h2>
-      
-      <div *ngIf="invoice" class="border border-gray-300 rounded-lg p-6 mb-6">
-        <div class="mb-4">
-          <h3 class="text-lg font-semibold">Invoice {{ invoice.invoiceNumber }}</h3>
-          <p class="text-sm text-gray-600">{{ invoice.invoiceDate | date }}</p>
+      <div class="text-center">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+          <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
         </div>
-        <div class="space-y-2">
-          <div class="flex justify-between">
-            <span>Subtotal:</span>
-            <span>${{ invoice.subTotal.toFixed(2) }}</span>
-          </div>
-          <div class="flex justify-between">
-            <span>Tax:</span>
-            <span>${{ invoice.taxAmount.toFixed(2) }}</span>
-          </div>
-          <div class="flex justify-between font-bold text-lg pt-2 border-t">
-            <span>Total:</span>
-            <span>${{ invoice.totalAmount.toFixed(2) }}</span>
+        <h2 class="text-2xl font-semibold text-gray-900 mb-4">Appointment Booked Successfully!</h2>
+        
+        <div *ngIf="createdAppointment" class="bg-gray-50 rounded-lg p-6 mb-6">
+          <h3 class="text-lg font-semibold mb-4">Appointment Details</h3>
+          <div class="space-y-2 text-left">
+            <div class="flex justify-between">
+              <span class="font-medium">Patient:</span>
+              <span>{{ selectedPatient?.firstName }} {{ selectedPatient?.lastName }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-medium">Doctor:</span>
+              <span>{{ selectedDoctor?.firstName }} {{ selectedDoctor?.lastName }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-medium">Date:</span>
+              <span>{{ appointmentDate }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-medium">Time:</span>
+              <span>{{ appointmentTime }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-medium">Visit Fee:</span>
+              <span>${{ visitFee.toFixed(2) }}</span>
+            </div>
+            <div *ngIf="reason" class="flex justify-between">
+              <span class="font-medium">Reason:</span>
+              <span class="text-right">{{ reason }}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
-          <select [(ngModel)]="paymentMethod"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="Credit Card">Credit Card</option>
-            <option value="Debit Card">Debit Card</option>
-            <option value="Cash">Cash</option>
-            <option value="Bank Transfer">Bank Transfer</option>
-          </select>
+        <div class="space-y-4">
+          <p class="text-gray-600">
+            Your appointment has been scheduled. You can now manage invoices separately in the Invoice Management section.
+          </p>
+          
+          <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <button (click)="goToInvoices()"
+              class="bg-blue-600 text-white py-2 px-6 rounded-md hover:bg-blue-700 transition duration-150">
+              Manage Invoices
+            </button>
+            <button (click)="bookAnother()"
+              class="bg-gray-600 text-white py-2 px-6 rounded-md hover:bg-gray-700 transition duration-150">
+              Book Another Appointment
+            </button>
+          </div>
         </div>
-        <button (click)="payInvoice()"
-          class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition duration-150">
-          Pay Invoice
-        </button>
       </div>
     </div>
   </div>

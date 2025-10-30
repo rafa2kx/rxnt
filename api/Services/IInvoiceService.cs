@@ -9,6 +9,7 @@ namespace RXNT.API.Services
         Task<InvoiceDto?> GetInvoiceByIdAsync(int id);
         Task<InvoiceDto> CreateInvoiceAsync(InvoiceDto invoice);
         Task<InvoiceDto?> UpdateInvoiceAsync(int id, InvoiceDto invoice);
+        Task<bool> DeleteInvoiceAsync(int id);
         Task<bool> MarkInvoiceAsPaidAsync(int id, string paymentMethod);
         Task<(bool IsValid, string ErrorMessage)> ValidateInvoiceAsync(Invoice invoice);
     }

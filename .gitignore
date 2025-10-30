@@ -36,6 +36,12 @@ api/.vscode/
 *.pdb
 *.exe
 
+# .NET Tests
+TestProject/RXNT.API.Tests/bin/
+TestProject/RXNT.API.Tests/obj/
+TestProject/RXNT.API.Tests/.vs/
+TestProject/RXNT.API.Tests/.vscode/
+
 # Logs
 logs/
 *.log
