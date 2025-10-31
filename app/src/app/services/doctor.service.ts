@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Doctor } from '../models/doctor.model';
+import { Appointment } from '../models/appointment.model';
 
 @Injectable({
   providedIn: 'root'
@@ -29,5 +30,9 @@ export class DoctorService {
 
   deleteDoctor(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  getDoctorSchedule(doctorId: number): Observable<Appointment[]> {
+    return this.http.get<Appointment[]>(`${this.apiUrl}/${doctorId}/schedule`);
   }
 }

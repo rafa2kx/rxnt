@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { DoctorService } from '../../services/doctor.service';
 import { Doctor } from '../../models/doctor.model';
 
@@ -25,7 +26,10 @@ export class DoctorsComponent implements OnInit {
     isActive: true
   };
 
-  constructor(private doctorService: DoctorService) {}
+  constructor(
+    private doctorService: DoctorService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loadDoctors();
@@ -90,5 +94,9 @@ export class DoctorsComponent implements OnInit {
       licenseNumber: '',
       isActive: true
     };
+  }
+
+  navigateToSchedule(): void {
+    this.router.navigate(['/doctors/schedule']);
   }
 }

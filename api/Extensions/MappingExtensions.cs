@@ -105,7 +105,9 @@ namespace RXNT.API.Extensions
                 Notes = appointment.Notes,
                 Status = appointment.Status,
                 CreatedDate = appointment.CreatedDate,
-                UpdatedDate = appointment.UpdatedDate
+                UpdatedDate = appointment.UpdatedDate,
+                Patient = appointment.Patient != null ? appointment.Patient.ToDto() : null,
+                Doctor = appointment.Doctor != null ? appointment.Doctor.ToDto() : null
             };
         }
 

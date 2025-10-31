@@ -12,5 +12,7 @@ namespace RXNT.API.DTOs
         public string Status { get; set; } = "Scheduled";
         public DateTime CreatedDate { get; set; }
         public DateTime? UpdatedDate { get; set; }
+        public PatientDto? Patient { get; set; }
+        public DoctorDto? Doctor { get; set; }
     }
 }

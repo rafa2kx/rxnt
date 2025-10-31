@@ -1,11 +1,18 @@
 <div class="container mx-auto px-4 py-8">
   <div class="flex justify-between items-center mb-6">
     <h2 class="text-3xl font-bold text-gray-800">Doctors Management</h2>
-    <button 
-      (click)="addDoctor()" 
-      class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
-      Add New Doctor
-    </button>
+    <div class="flex gap-3">
+      <button 
+        (click)="navigateToSchedule()" 
+        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+        View Schedule
+      </button>
+      <button 
+        (click)="addDoctor()" 
+        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+        Add New Doctor
+      </button>
+    </div>
   </div>
 
   <!-- Doctors List -->

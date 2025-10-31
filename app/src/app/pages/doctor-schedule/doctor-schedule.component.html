@@ -1,0 +1,100 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-3xl font-bold text-gray-800">Doctor Schedule</h2>
+      <button 
+        (click)="navigateToDoctors()" 
+        class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition-colors text-sm">
+        ← Back to Doctors
+      </button>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+      <label for="doctorSelect" class="block text-sm font-medium text-gray-700 mb-2">
+        Select Doctor
+      </label>
+      <select 
+        id="doctorSelect"
+        [(ngModel)]="selectedDoctorId"
+        (change)="onDoctorChange()"
+        class="mt-1 block w-full md:w-1/3 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 py-2 px-3 border">
+        <option [value]="null">-- Select a Doctor --</option>
+        <option *ngFor="let doctor of doctors" [value]="doctor.id">
+          {{ doctor.firstName }} {{ doctor.lastName }} - {{ doctor.specialty }}
+        </option>
+      </select>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="bg-white rounded-lg shadow-md p-8 text-center">
+    <div class="text-gray-600">Loading schedule...</div>
+  </div>
+
+  <div *ngIf="!loading && selectedDoctorId" class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+      <h3 class="text-xl font-semibold text-gray-800">
+        Schedule for Dr. {{ getSelectedDoctorName() }}
+      </h3>
+      <p class="text-sm text-gray-600 mt-1">
+        Total Appointments: {{ schedule.length }}
+      </p>
+    </div>
+
+    <div class="overflow-x-auto" *ngIf="schedule.length > 0">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <tr *ngFor="let appointment of schedule" class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">{{ formatDate(appointment.appointmentDate) }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ appointment.appointmentTime }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ getPatientName(appointment) }}</div>
+            </td>
+            <td class="px-6 py-4">
+              <div class="text-sm text-gray-900">{{ appointment.reason || 'N/A' }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                    [ngClass]="getStatusClass(appointment.status)">
+                {{ appointment.status }}
+              </span>
+            </td>
+            <td class="px-6 py-4">
+              <div class="text-sm text-gray-500 max-w-xs truncate" 
+                   [title]="appointment.notes">
+                {{ appointment.notes || 'N/A' }}
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div *ngIf="schedule.length === 0 && !loading" class="px-6 py-12 text-center">
+      <div class="text-gray-500">
+        <p class="text-lg mb-2">No appointments found for this doctor.</p>
+        <p class="text-sm">The selected doctor has no scheduled appointments.</p>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && !selectedDoctorId" class="bg-white rounded-lg shadow-md p-12 text-center">
+    <div class="text-gray-500">
+      <p class="text-lg">Please select a doctor to view their schedule.</p>
+    </div>
+  </div>
+</div>
+
