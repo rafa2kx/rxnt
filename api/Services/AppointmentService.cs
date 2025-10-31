@@ -2,6 +2,10 @@ using RXNT.API.Models;
 using RXNT.API.DTOs;
 using RXNT.API.Repositories;
 using RXNT.API.Extensions;
+using RXNT.API.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace RXNT.API.Services
 {
@@ -10,15 +14,18 @@ namespace RXNT.API.Services
         private readonly IAppointmentRepository _appointmentRepository;
         private readonly IAppointmentValidationService _validationService;
         private readonly ILogger<AppointmentService> _logger;
+        private readonly ApplicationDbContext _context;
 
         public AppointmentService(
             IAppointmentRepository appointmentRepository,
             IAppointmentValidationService validationService,
-            ILogger<AppointmentService> logger)
+            ILogger<AppointmentService> logger,
+            ApplicationDbContext context)
         {
             _appointmentRepository = appointmentRepository;
             _validationService = validationService;
             _logger = logger;
+            _context = context;
         }
 
         public async Task<IEnumerable<AppointmentDto>> GetAllAppointmentsAsync()
@@ -34,6 +41,51 @@ namespace RXNT.API.Services
                 _logger.LogError(ex, "Error getting all appointments");
                 throw;
             }
+        }
+
+        public async Task<int> BulkUpdateStatusAsync(string status, IEnumerable<int> appointmentIds)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+            {
+                throw new InvalidOperationException("Status is required.");
+            }
+
+            var idsList = appointmentIds?.ToList() ?? new List<int>();
+            if (idsList.Count == 0)
+            {
+                return 0;
+            }
+
+            var updatedCount = 0;
+            var connection = _context.Database.GetDbConnection();
+            await using (connection)
+            {
+                if (connection.State != ConnectionState.Open)
+                {
+                    await connection.OpenAsync();
+                }
+
+                await using var command = connection.CreateCommand();
+                command.CommandText = "dbo.BulkUpdateAppointmentStatus";
+                command.CommandType = CommandType.StoredProcedure;
+
+                var statusParam = new SqlParameter("@Status", SqlDbType.NVarChar, 32) { Value = status };
+                var updatedParam = new SqlParameter("@UpdatedDate", SqlDbType.DateTime2) { Value = DateTime.UtcNow };
+                var idsParam = new SqlParameter("@Ids", SqlDbType.NVarChar) 
+                {
+                    Value = string.Join(',', idsList)
+                };
+
+                command.Parameters.Add(statusParam);
+                command.Parameters.Add(updatedParam);
+                command.Parameters.Add(idsParam);
+
+                var result = await command.ExecuteNonQueryAsync();
+                updatedCount = result;
+            }
+
+            _logger.LogInformation("Bulk updated {Count} appointments to status {Status}", updatedCount, status);
+            return updatedCount;
         }
 
         public async Task<AppointmentDto?> GetAppointmentByIdAsync(int id)

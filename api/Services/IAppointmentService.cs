@@ -11,5 +11,6 @@ namespace RXNT.API.Services
         Task<AppointmentDto?> UpdateAppointmentAsync(int id, AppointmentDto appointment);
         Task<bool> DeleteAppointmentAsync(int id);
         Task<(bool IsValid, string ErrorMessage)> ValidateAppointmentAsync(Appointment appointment);
+        Task<int> BulkUpdateStatusAsync(string status, IEnumerable<int> appointmentIds);
     }
 }

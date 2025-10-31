@@ -4,6 +4,7 @@ using RXNT.API.Models;
 using RXNT.API.DTOs;
 using RXNT.API.Services;
 using Microsoft.Extensions.Options;
+using RXNT.API.Models.Requests;
 
 namespace RXNT.API.Controllers
 {
@@ -55,6 +56,16 @@ namespace RXNT.API.Controllers
                 var createdAppointment = await _appointmentService.CreateAppointmentAsync(appointment);
                 return CreatedAtAction(nameof(GetAppointment), new { id = createdAppointment.Id }, createdAppointment);
             });
+        }
+
+        [HttpPost("bulk-status")]
+        public async Task<IActionResult> BulkUpdateStatus(BulkAppointmentStatusUpdateRequest request)
+        {
+            //return await ExecuteWithTransactionAsync(async () =>
+            //{
+            var updated = await _appointmentService.BulkUpdateStatusAsync(request.Status, request.Ids);
+            return Ok("Success");
+            //});
         }
 
         [HttpPut("{id}")]
